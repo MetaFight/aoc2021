@@ -1,0 +1,38 @@
+#!csharp
+
+/// Common
+using System.IO;
+
+void print<T>(T s) { System.Console.WriteLine(s); }
+
+int CountIncrements(IEnumerable<int> input) {
+  var result = 0;
+  var previous = input.First();
+  foreach (var item in input) {
+    if (item > previous) {
+      result++;
+    }
+    previous = item;
+  }
+  return result;
+}
+
+#!csharp
+
+/// Part 1
+var input = 
+  File.ReadLines("input.txt")
+    .Select(item => int.Parse(item))
+    .ToList();
+
+print(CountIncrements(input));
+
+#!csharp
+
+/// Part 2
+var windowSums = 
+  input
+    .Select((item, index) => input.Skip(index).Take(3).Sum())
+    .Take(input.Count - 2).ToList();
+
+print(CountIncrements(windowSums));
