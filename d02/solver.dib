@@ -15,34 +15,20 @@ var route =
     .Select(item => new Step(item[0], int.Parse(item[1])))
     .ToList();
 
-T Navigate<T>(IEnumerable<Step> route, T start, Func<string, Func<T, int, T>> functionMap) {
-  T result = start;
-  foreach (var step in route) {
-    var func = functionMap(step.heading);
-    result = func(result, step.magnitude);
-  }
-  return result;
-}
-
 #!csharp
 
 /// Part 1
 public record Point(int x, int y);
 
-Func<Point, int, Point> FunctionMap(string heading) {
-  Point Forward(Point position, int value) { return position with { x = position.x + value}; }
-  Point Down(Point position, int value) { return position with { y =  position.y + value}; }
-  Point Up(Point position, int value) { return position with { y =  position.y - value}; }
-
-  return heading switch {
-    "forward" => Forward,
-    "up" => Up,
-    "down" => Down,
+var stepHandler = (Point position, Step step) =>
+  step.heading switch {
+    "forward" => position with { x = position.x + step.magnitude},
+    "up" => position with { y =  position.y - step.magnitude},
+    "down" => position with { y =  position.y + step.magnitude},
     _ => throw new NotImplementedException()
   };
-}
 
-var position = Navigate(route, new Point(0, 0), FunctionMap);
+var position = route.Aggregate(new Point(0, 0), stepHandler);
 
 print($"x: {position.x}, y: {position.y}, solution: {position.x * position.y}");
 
@@ -51,19 +37,14 @@ print($"x: {position.x}, y: {position.y}, solution: {position.x * position.y}");
 /// Part 2
 public record Position(int x, int y, int aim);
 
-Func<Position, int, Position> FunctionMap(string heading) {
-  Position Down(Position position, int value) { return position with { aim =  position.aim + value}; }
-  Position Up(Position position, int value) { return position with { aim =  position.aim - value}; }
-  Position Forward(Position position, int value) { return position with { x = position.x + value, y = position.y + (position.aim * value)}; }
-
-  return heading switch {
-    "forward" => Forward,
-    "up" => Up,
-    "down" => Down,
+var stepHandler = (Position position, Step step) =>
+  step.heading switch {
+    "forward" => position with { x = position.x + step.magnitude, y = position.y + (position.aim * step.magnitude)},
+    "up" => position with { aim = position.aim - step.magnitude},
+    "down" => position with { aim = position.aim + step.magnitude},
     _ => throw new NotImplementedException()
   };
-}
 
-var position = Navigate(route, new Position(0, 0, 0), FunctionMap);
+var position = route.Aggregate(new Position(0, 0, 0), stepHandler);
 
 print($"x: {position.x}, y: {position.y}, solution: {position.x * position.y}");
