@@ -23,9 +23,9 @@ public record Point(int x, int y);
 var stepHandler = (Point position, Step step) =>
   step.heading switch {
     "forward" => position with { x = position.x + step.magnitude},
-    "up" => position with { y =  position.y - step.magnitude},
-    "down" => position with { y =  position.y + step.magnitude},
-    _ => throw new NotImplementedException()
+         "up" => position with { y =  position.y - step.magnitude},
+       "down" => position with { y =  position.y + step.magnitude},
+            _ => throw new NotImplementedException()
   };
 
 var position = route.Aggregate(new Point(0, 0), stepHandler);
@@ -40,9 +40,9 @@ public record Position(int x, int y, int aim);
 var stepHandler = (Position position, Step step) =>
   step.heading switch {
     "forward" => position with { x = position.x + step.magnitude, y = position.y + (position.aim * step.magnitude)},
-    "up" => position with { aim = position.aim - step.magnitude},
-    "down" => position with { aim = position.aim + step.magnitude},
-    _ => throw new NotImplementedException()
+         "up" => position with { aim = position.aim - step.magnitude},
+       "down" => position with { aim = position.aim + step.magnitude},
+            _ => throw new NotImplementedException()
   };
 
 var position = route.Aggregate(new Position(0, 0, 0), stepHandler);
