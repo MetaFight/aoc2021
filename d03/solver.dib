@@ -1,0 +1,107 @@
+#!csharp
+
+/// Common
+using System.IO;
+using static System.Console;
+
+int printNameWidth = 0;
+
+void print<T>(T arg, string name = "") {
+  var additionalPaddingRequired = name.Length - printNameWidth;
+  if (additionalPaddingRequired > 0) {
+    printNameWidth += (int)(1.5 * additionalPaddingRequired);
+  }
+  
+  if (arg is IEnumerable enumerable && arg is not string) {
+    var list = enumerable.Cast<object>().ToList();
+    var entry = list.FirstOrDefault();
+    if (entry is IEnumerable && entry is not string) {
+      name = $">{name}";
+      list.ForEach(item => print(item, name));
+    } else {
+      name = $"{name}[]";
+      print(string.Join(", ", list), name);
+    } 
+  } else {
+    WriteLine($"{name.PadLeft(printNameWidth)} {arg}");
+  }
+}
+
+var toInt = (IEnumerable<int> digits) => {
+  var items = digits.Reverse().ToList();
+  int result = 0;
+  for (int i = 0; i < items.Count; i++) {
+    result += (items[i] > 0 ? 1 : 0) << i;
+  }
+  return result;
+};
+
+var input = 
+  File.ReadLines("input.txt")
+    .Select(item => item.Select(digit => int.Parse(digit.ToString())).ToList())
+    .ToList();
+
+#!csharp
+
+/// Part 1
+
+var gammaTally = input[0].Select(item => item).ToList();
+foreach(var line in input.Skip(1)) {
+  for(int i = 0; i < line.Count(); i++) {
+    gammaTally[i] += line[i];
+  }
+}
+
+var threshold = input.Count() / 2;
+var gammaBits = gammaTally.Select(item => item > threshold ? 1: 0).ToList();
+var epsilonBits = gammaTally.Select(item => item <= threshold ? 1: 0).ToList();
+
+var gamma = toInt(gammaBits);
+var epsilon = toInt(epsilonBits);
+
+//print(input);
+//print(gammaBits, "gammaBits");
+//print(gamma, "gamma");
+//print(epsilonBits, "epsilonBits");
+//print(epsilon, "epsilon");
+print(gamma * epsilon, "part1");
+
+#!csharp
+
+/// Part 2
+
+//var input = 
+//  File.ReadLines("test.input.txt")
+//    .Select(item => item.Select(digit => int.Parse(digit.ToString())).ToList())
+//    .ToList();
+
+List<List<int>> Filter(List<List<int>> input, int position, bool flipMostCommon = false) {
+  if (input.Count <= 1) {
+    return input;
+  }
+  var threshold = input.Count / 2f;
+  var positionSum = input.Sum(item => item[position]);
+  var mostCommon = positionSum >= threshold ? 1 : 0;
+  if (flipMostCommon) {
+    mostCommon = Math.Abs(mostCommon - 1);
+  }
+
+  //print($"position: {position}, mostCommon: {mostCommon}");
+
+  var keeping = input.Where(item => item[position] == mostCommon).ToList();
+  //print(keeping, "keeping");
+  return keeping;
+}
+
+var oxygenCandidates = input;
+var co2Candidates = input;
+for (int i = 0; i < input.Count; i++) {
+  oxygenCandidates = Filter(oxygenCandidates, i);
+  co2Candidates = Filter(co2Candidates, i, flipMostCommon: true);
+}
+
+var oxygenRating = toInt(oxygenCandidates[0]);
+print(oxygenRating, "oxygenRating");
+var co2Rating = toInt(co2Candidates[0]);
+print(co2Rating, "co2Rating");
+print(oxygenRating * co2Rating, "part2");
