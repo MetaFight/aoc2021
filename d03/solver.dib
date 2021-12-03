@@ -6,6 +6,7 @@ using static System.Console;
 
 int printNameWidth = 0;
 
+// For debugging purposes.  Not related to the problem.
 void print<T>(T arg, string name = "") {
   var additionalPaddingRequired = name.Length - printNameWidth;
   if (additionalPaddingRequired > 0) {
@@ -45,35 +46,25 @@ var input =
 
 /// Part 1
 
-var gammaTally = input[0].Select(item => item).ToList();
+var bitTally = input[0].Select(item => item).ToList();
 foreach(var line in input.Skip(1)) {
-  for(int i = 0; i < line.Count(); i++) {
-    gammaTally[i] += line[i];
+  for(int i = 0; i < line.Count; i++) {
+    bitTally[i] += line[i];
   }
 }
 
-var threshold = input.Count() / 2;
-var gammaBits = gammaTally.Select(item => item > threshold ? 1: 0).ToList();
-var epsilonBits = gammaTally.Select(item => item <= threshold ? 1: 0).ToList();
+var threshold = input.Count() / 2f;
+var gammaBits = bitTally.Select(item => item > threshold ? 1: 0).ToList();
+var epsilonBits = bitTally.Select(item => item <= threshold ? 1: 0).ToList();
 
 var gamma = toInt(gammaBits);
 var epsilon = toInt(epsilonBits);
 
-//print(input);
-//print(gammaBits, "gammaBits");
-//print(gamma, "gamma");
-//print(epsilonBits, "epsilonBits");
-//print(epsilon, "epsilon");
 print(gamma * epsilon, "part1");
 
 #!csharp
 
 /// Part 2
-
-//var input = 
-//  File.ReadLines("test.input.txt")
-//    .Select(item => item.Select(digit => int.Parse(digit.ToString())).ToList())
-//    .ToList();
 
 List<List<int>> Filter(List<List<int>> input, int position, bool flipMostCommon = false) {
   if (input.Count <= 1) {
@@ -81,16 +72,9 @@ List<List<int>> Filter(List<List<int>> input, int position, bool flipMostCommon 
   }
   var threshold = input.Count / 2f;
   var positionSum = input.Sum(item => item[position]);
-  var mostCommon = positionSum >= threshold ? 1 : 0;
-  if (flipMostCommon) {
-    mostCommon = Math.Abs(mostCommon - 1);
-  }
+  var mostCommon = (positionSum >= threshold ? 1 : 0) ^ (flipMostCommon ? 1 : 0);
 
-  //print($"position: {position}, mostCommon: {mostCommon}");
-
-  var keeping = input.Where(item => item[position] == mostCommon).ToList();
-  //print(keeping, "keeping");
-  return keeping;
+  return input.Where(item => item[position] == mostCommon).ToList();
 }
 
 var oxygenCandidates = input;
@@ -101,7 +85,5 @@ for (int i = 0; i < input.Count; i++) {
 }
 
 var oxygenRating = toInt(oxygenCandidates[0]);
-print(oxygenRating, "oxygenRating");
 var co2Rating = toInt(co2Candidates[0]);
-print(co2Rating, "co2Rating");
 print(oxygenRating * co2Rating, "part2");
