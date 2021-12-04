@@ -62,22 +62,15 @@ var boards =
     .Select(group => new Board(group.Key, group.SelectMany(item => item).ToList(), getOpportunities(group)))
     .ToList();
 
-void PrintWinner(Board board, int number) {
-  var score = board.Remaining.Sum() * number;
-  print($"Board {board.Index + 1} is a winner w/ score {score}");
-}
-
-var winnerCount = 0;
 foreach(var number in drawSequence) 
 {
-  foreach(var board in boards)
+  foreach(var board in boards.Where(board => board.Opportunities.Any(opp => opp.Count == 0)))
   {
     board.Remaining.Remove(number);
     board.Opportunities.ForEach(opp => opp.Remove(number));
 
-    var previousWinnerCount = winnerCount;
-    winnerCount = boards.Count(item => item.Opportunities.Any(opp => opp.Count == 0));
-    if (winnerCount != previousWinnerCount) {
+    var winnerFound = board.Opportunities.Any(opp => opp.Count == 0);
+    if (winnerFound) {
       var score = board.Remaining.Sum() * number;
       print($"Board {board.Index + 1} is a winner w/ score {score}");
     }
