@@ -1,0 +1,85 @@
+#!csharp
+
+/// Common
+using System.IO;
+using static System.Console;
+
+// For debugging purposes.  Not related to the problem.
+int printNameWidth = 0;
+void print<T>(T arg, string name = "") {
+  var additionalPaddingRequired = name.Length - printNameWidth;
+  if (additionalPaddingRequired > 0) {
+    printNameWidth += (int)(1.5 * additionalPaddingRequired);
+  }
+  
+  if (arg is IEnumerable enumerable && arg is not string) {
+    var list = enumerable.Cast<object>().ToList();
+    var entry = list.FirstOrDefault();
+    if (entry is IEnumerable && entry is not string) {
+      name = $">{name}";
+      list.ForEach(item => print(item, name));
+    } else {
+      name = $"{name}[]";
+      print(string.Join(", ", list), name);
+    } 
+  } else {
+    WriteLine($"{name.PadLeft(printNameWidth)} {arg}");
+  }
+}
+
+var rawInput = File.ReadLines("input.txt").ToList();
+
+#!csharp
+
+/// Part 1 and 2
+
+var drawSequence = rawInput[0].Split(",").Select(item => int.Parse(item)).ToList();
+
+public record Board(int Index, List<int> Remaining, List<List<int>> Opportunities);
+
+var getOpportunities = (IGrouping<int, IEnumerable<int>> grouping) => {
+  var rows = grouping.Select(item => item.ToList());
+  var cols =
+    Enumerable
+      .Range(0, rows.First().Count)
+      .Select(index => grouping.Select(row => row.Skip(index).First()).ToList());
+
+  var result = new List<List<int>>(rows);
+  result.AddRange(cols);
+  return result;
+};
+
+var boards = 
+  rawInput
+    .Skip(2)
+    .Where(item => !String.IsNullOrWhiteSpace(item))
+    .Select((row, index) => new { index = index / 5, row })
+    .GroupBy(
+      item => item.index, 
+      item => item.row.Trim()
+                      .Split(" ", StringSplitOptions.RemoveEmptyEntries)
+                      .Select(cell => int.Parse(cell)))
+    .Select(group => new Board(group.Key, group.SelectMany(item => item).ToList(), getOpportunities(group)))
+    .ToList();
+
+void PrintWinner(Board board, int number) {
+  var score = board.Remaining.Sum() * number;
+  print($"Board {board.Index + 1} is a winner w/ score {score}");
+}
+
+var winnerCount = 0;
+foreach(var number in drawSequence) 
+{
+  foreach(var board in boards)
+  {
+    board.Remaining.Remove(number);
+    board.Opportunities.ForEach(opp => opp.Remove(number));
+
+    var previousWinnerCount = winnerCount;
+    winnerCount = boards.Count(item => item.Opportunities.Any(opp => opp.Count == 0));
+    if (winnerCount != previousWinnerCount) {
+      var score = board.Remaining.Sum() * number;
+      print($"Board {board.Index + 1} is a winner w/ score {score}");
+    }
+  }
+}
