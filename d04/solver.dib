@@ -64,7 +64,7 @@ var boards =
 
 foreach(var number in drawSequence) 
 {
-  foreach(var board in boards.Where(board => board.Opportunities.Any(opp => opp.Count == 0)))
+  foreach(var board in boards.Where(board => !board.Opportunities.Any(opp => opp.Count == 0)))
   {
     board.Remaining.Remove(number);
     board.Opportunities.ForEach(opp => opp.Remove(number));
