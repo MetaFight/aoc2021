@@ -1,0 +1,46 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+var rawInput = File.ReadLines("input.txt").ToList();
+
+#!csharp
+
+/// Part 1
+#load "Models.cs"
+
+var input = 
+  rawInput
+    .Select(item => item.Split(" -> ").SelectMany(pair => pair.Split(",")))
+    .Select(item => item.Select(x => int.Parse(x)).ToList());
+
+var lines = input.Select(item => new Line(item[0], item[1], item[2], item[3])).ToList();
+
+var part1Lines = lines.Where(item => item.IsHorizontal || item.IsVertical);
+var part1Points = part1Lines.SelectMany(point => point.Range);
+
+var part1 = 
+  part1Points
+    .GroupBy(Self)
+    .Where(group => group.Count() > 1)
+    .Count();
+
+print(part1);
+
+#!csharp
+
+var part2Lines = lines.Where(item => item.IsHorizontal || item.IsVertical || item.IsDiagonal);
+var part2Points = part2Lines.SelectMany(point => point.Range);
+
+var part2 = 
+  part2Points
+    .GroupBy(Self)
+    .Where(group => group.Count() > 1)
+    .Count();
+
+print(part2);
