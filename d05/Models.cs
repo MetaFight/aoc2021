@@ -21,8 +21,8 @@ public class Line
   public bool IsVertical => this.X1 == this.X2;
   public bool IsDiagonal => Math.Abs(this.X2 - this.X1) == Math.Abs(this.Y2 - this.Y1);
 
-  public int HorizontalIncrement => (this.X2 - this.X1) / Math.Abs(this.X2 - this.X1);
-  public int VerticalIncrement => (this.Y2 - this.Y1) / Math.Abs(this.Y2 - this.Y1);
+  public int HorizontalIncrement => this.X2 >= this.X1 ? 1 : -1;
+  public int VerticalIncrement => this.Y2 >= this.Y1 ? 1 : -1;
 
   public IEnumerable<Point> Range
     => this.IsHorizontal ? Enumerable.Range(Math.Min(this.X1, this.X2), Math.Abs(this.X2 - this.X1) + 1).Select(item => new Point(item, this.Y1)).ToList()

@@ -2,25 +2,22 @@
 
 /// Common
 #load "../common/Utils.cs"
+#load "Models.cs"
+
 using System.IO;
 using static Utils;
 
 T Self<T>(T item) => item;
 
-var rawInput = File.ReadLines("input.txt").ToList();
+var lines = 
+  File.ReadLines("input.txt")
+    .Select(item => item.Split(" -> ").SelectMany(pair => pair.Split(",")))
+    .Select(item => item.Select(x => int.Parse(x)).ToList())
+    .Select(item => new Line(item[0], item[1], item[2], item[3])).ToList();
 
 #!csharp
 
 /// Part 1
-#load "Models.cs"
-
-var input = 
-  rawInput
-    .Select(item => item.Split(" -> ").SelectMany(pair => pair.Split(",")))
-    .Select(item => item.Select(x => int.Parse(x)).ToList());
-
-var lines = input.Select(item => new Line(item[0], item[1], item[2], item[3])).ToList();
-
 var part1Lines = lines.Where(item => item.IsHorizontal || item.IsVertical);
 var part1Points = part1Lines.SelectMany(point => point.Range);
 
@@ -34,6 +31,7 @@ print(part1);
 
 #!csharp
 
+/// Part 2
 var part2Lines = lines.Where(item => item.IsHorizontal || item.IsVertical || item.IsDiagonal);
 var part2Points = part2Lines.SelectMany(point => point.Range);
 
