@@ -19,7 +19,7 @@ var lines =
 
 /// Part 1
 var part1Lines = lines.Where(item => item.IsHorizontal || item.IsVertical);
-var part1Points = part1Lines.SelectMany(point => point.Range);
+var part1Points = part1Lines.SelectMany(line => line.Range);
 
 var part1 = 
   part1Points
@@ -33,7 +33,7 @@ print(part1);
 
 /// Part 2
 var part2Lines = lines.Where(item => item.IsHorizontal || item.IsVertical || item.IsDiagonal);
-var part2Points = part2Lines.SelectMany(point => point.Range);
+var part2Points = part2Lines.SelectMany(line => line.Range);
 
 var part2 = 
   part2Points
