@@ -15,8 +15,6 @@ var count = upperBound - lowerBound + 1;
 #!csharp
 
 /// Part 1
-using System.IO;
-
 var part1 =
   Enumerable
     .Range(lowerBound, count)
