@@ -1,0 +1,92 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+#load "Models.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+#!csharp
+
+/// Part 1
+using System.IO;
+
+const int adultPeriod = 7;
+const int juvenilePeriod = adultPeriod + 2;
+const int sliceCount = juvenilePeriod;
+
+var log = new StringBuilder();
+
+var ages = File.ReadAllText("input.txt").Split(",").Select(item => int.Parse(item)).ToList();
+var sliceSizesByAge = ages.GroupBy(item => item).ToDictionary(group => group.Key, group => group.Count());
+
+var population = 
+  Enumerable
+    .Range(0, sliceCount)
+    .Reverse()
+    .Select(age => new PopulationSlice(
+      offset: age, 
+      size: sliceSizesByAge.TryGetValue(age, out var value) ? (ulong)value : 0))
+    .ToList();
+
+for(int i = 0; i < sliceCount; i++) {
+  var childSliceIndex = (i - 8 + sliceCount) % sliceCount;
+  var continuationSliceIndex = (i + 1) % (sliceCount);
+  if (continuationSliceIndex == 0) {
+    continuationSliceIndex = 2;
+  }
+
+  var slice = population[i];
+  slice.ChildSlice = population[childSliceIndex];
+  slice.ContinuationSlice = population[continuationSliceIndex];
+}
+
+string FormatState() {
+  return string.Join(
+    ", ",
+    population
+      .Where(item => item.Size > 0)
+      .OrderBy(item => item.Offset)
+      .Select(item => $"[{item.Offset}:{item.Size}]")
+  );
+}
+
+const int generationCount = 256;
+var changesToApply = new List<Action>();
+
+log.AppendLine(FormatState());
+for (int i = 0; i < generationCount; i++) {
+  // Calculate births from adults
+  foreach (var slice in population) {
+    slice.IncrementAge(out var change);
+    changesToApply.Add(change);
+  }
+
+  // Apply population changes
+  foreach(var change in changesToApply) {
+    change();
+  }
+  changesToApply.Clear();
+  log.AppendLine(FormatState());
+}
+
+var part1 = population.Aggregate(0uL, (acc, item) => acc + item.Size);
+print(part1, "part1");
+
+File.WriteAllText("out.txt", log.ToString());
+
+#!csharp
+
+/// Part 2
+
+// var ages = File.ReadAllText("input.txt").Split(",").Select(item => int.Parse(item)).ToList();
+
+// for (int i = 0; i < 256; i++) {
+//   var newbornCount = ages.Count(item => item == 0);
+//   ages = ages.Select(item => item == 0 ? (adultReproductionPeriod - 1) : item - 1).ToList();
+//   ages.AddRange(Enumerable.Repeat(childReproductionPeriod - 1, newbornCount));
+// }
+// print(ages.Count);
