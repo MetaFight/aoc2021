@@ -2,49 +2,37 @@
 
 /// Common
 #load "../common/Utils.cs"
-// #load "Models.cs"
 
 using System.IO;
 using static Utils;
 
-T Self<T>(T item) => item;
-
 var input = File.ReadAllText("input.txt").Split(",").Select(item => int.Parse(item)).ToList();
+
+var lowerBound = input.Min();
+var upperBound = input.Max();
+var count = upperBound - lowerBound + 1;
 
 #!csharp
 
 /// Part 1
 using System.IO;
 
-var lowerBound = input.Min();
-var upperBound = input.Max();
-var count = upperBound - lowerBound + 1;
-
-var min = (position: int.MinValue, cost: int.MaxValue);
-
-foreach(var position in Enumerable.Range(lowerBound, count)) {
-  var cost = input.Select(item => Math.Abs(item - position)).Sum();
-  if (cost < min.cost) {
-    min = (position, cost);
-  }
-}
-
-print(min.cost, "part1");
+var part1 =
+  Enumerable
+    .Range(lowerBound, count)
+    .Select(position => input.Select(item => Math.Abs(item - position)).Sum())
+    .Min();
+print(part1, "part1");
 
 #!csharp
 
 /// Part 2
-
-var min = (position: int.MinValue, cost: int.MaxValue);
-
-// var costFunction = (int distance) => Enumerable.Range(1, distance).Sum();
 var costFunction = (int distance) => distance * (distance + 1) / 2;
 
-foreach(var position in Enumerable.Range(lowerBound, count)) {
-  var totalCost = input.Select(item => Math.Abs(item - position)).Select(costFunction).Sum();
-  if (totalCost < min.cost) {
-    min = (position, cost: totalCost);
-  }
-}
+var part2 =
+  Enumerable
+    .Range(lowerBound, count)
+    .Select(position => input.Select(item => costFunction(Math.Abs(item - position))).Sum())
+    .Min();
 
-print(min.cost, "part2");
+print(part2, "part2");
