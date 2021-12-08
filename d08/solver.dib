@@ -29,13 +29,24 @@ print(part1, "part1");
 /// Part 2
 
 int part2 = 0;
-foreach (var entry in entries) {
+foreach (var entry in entries) 
+{
   (var input, var output) = entry;
+  
+  var decoding = DecodeSegments(input);
 
+  var displayValue = output.Reverse().Select((item, index) => ToInt(item, index, decoding)).Sum();
+  part2 += displayValue;
+}
+print(part2, "part2");
+
+record SegmentDecoding(char top, char topLeft, char topRight, char middle, char bottomLeft, char bottomRight, char bottom);
+
+SegmentDecoding DecodeSegments(IEnumerable<string> input) {
   var segmentOccurrences = 
-    input
-      .SelectMany(Self)
-      .GroupBy(Self).OrderBy(group => group.Count());
+  input
+    .SelectMany(Self)
+    .GroupBy(Self).OrderBy(group => group.Count());
   
   var bottomLeft = segmentOccurrences.Single(group => group.Count() == 4).Key;
   var topLeft = segmentOccurrences.Single(group => group.Count() == 6).Key;
@@ -54,65 +65,62 @@ foreach (var entry in entries) {
   var top = inputWithoutOne.SelectMany(Self).GroupBy(Self).Single(group => topOrTopRight.Contains(group.Key) && group.Count() == 8).Key;
   var topRight = inputWithoutOne.SelectMany(Self).GroupBy(Self).Single(group => topOrTopRight.Contains(group.Key) && group.Count() == 7).Key;
 
-  int ToInt(string pattern, int orderOfMagnitude) {
-    var scale = (int)Math.Pow(10, orderOfMagnitude);
-    
-    bool IsMatch(string pattern, List<char> reference) {
-      return pattern.Length == reference.Count && pattern.Intersect(reference).Count() == reference.Count;
-    }
+  return new SegmentDecoding(top, topLeft, topRight, middle, bottomLeft, bottomRight, bottom);
+}
 
-    var zeroPattern = new List<char> { top, topRight, bottomRight, bottom, bottomLeft, topLeft };
-    if (IsMatch(pattern, zeroPattern)) {
-      return scale * 0;
-    }
-
-    if (pattern.Length == 2) {
-      return scale * 1;
-    }
-
-    var twoPattern = new List<char> { top, topRight, middle, bottomLeft, bottom };
-    if (IsMatch(pattern, twoPattern)) {
-      return scale * 2;
-    }
-
-    var threePattern = new List<char> { top, topRight, middle, bottomRight, bottom };
-    if (IsMatch(pattern, threePattern)) {
-      return scale * 3;
-    }
-
-    if (pattern.Length == 4) {
-      return scale * 4;
-    }
-
-    var fivePattern = new List<char> { top, topLeft, middle, bottomRight, bottom };
-    if (IsMatch(pattern, fivePattern)) {
-      return scale * 5;
-    }
-
-    var sixPattern = new List<char> { top, topLeft, bottomLeft, bottom, bottomRight, middle };
-    if (IsMatch(pattern, sixPattern)) {
-      return scale * 6;
-    }
-
-    if (pattern.Length == 3) {
-      return scale * 7;
-    }
-
-    if (pattern.Length == 7) {
-      return scale * 8;
-    }
-
-    var ninePattern = new List<char> { middle, topLeft, top, topRight, bottomRight, bottom };
-    if (IsMatch(pattern, ninePattern)) {
-      return scale * 9;
-    }
-
-    throw new ArgumentException();
+int ToInt(string pattern, int orderOfMagnitude, SegmentDecoding decoding) {
+  var scale = (int)Math.Pow(10, orderOfMagnitude);
+  var (top, topLeft, topRight, middle, bottomLeft, bottomRight, bottom) = decoding;
+  
+  bool IsMatch(string pattern, List<char> reference) {
+    return pattern.Length == reference.Count && pattern.Intersect(reference).Count() == reference.Count;
   }
 
-  var displayValue = output.Reverse().Select(ToInt).Sum();
-  part2 += displayValue;
+  var zeroPattern = new List<char> { top, topRight, bottomRight, bottom, bottomLeft, topLeft };
+  if (IsMatch(pattern, zeroPattern)) {
+    return scale * 0;
+  }
 
-  // print($"{format(output)}: {displayValue}");
+  if (pattern.Length == 2) {
+    return scale * 1;
+  }
+
+  var twoPattern = new List<char> { top, topRight, middle, bottomLeft, bottom };
+  if (IsMatch(pattern, twoPattern)) {
+    return scale * 2;
+  }
+
+  var threePattern = new List<char> { top, topRight, middle, bottomRight, bottom };
+  if (IsMatch(pattern, threePattern)) {
+    return scale * 3;
+  }
+
+  if (pattern.Length == 4) {
+    return scale * 4;
+  }
+
+  var fivePattern = new List<char> { top, topLeft, middle, bottomRight, bottom };
+  if (IsMatch(pattern, fivePattern)) {
+    return scale * 5;
+  }
+
+  var sixPattern = new List<char> { top, topLeft, bottomLeft, bottom, bottomRight, middle };
+  if (IsMatch(pattern, sixPattern)) {
+    return scale * 6;
+  }
+
+  if (pattern.Length == 3) {
+    return scale * 7;
+  }
+
+  if (pattern.Length == 7) {
+    return scale * 8;
+  }
+
+  var ninePattern = new List<char> { middle, topLeft, top, topRight, bottomRight, bottom };
+  if (IsMatch(pattern, ninePattern)) {
+    return scale * 9;
+  }
+
+  throw new ArgumentException();
 }
-print(part2, "part2");
