@@ -1,0 +1,118 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+#!csharp
+
+/// Part 1
+var rawInput = File.ReadLines("input.txt");
+var entries = rawInput.Select(line => line.Split(" | ").ToList()).Select(item => (input: item[0].Split(), output: item[1].Split())).ToList();
+
+var part1 = 
+  entries
+    .Select(entry => 
+      entry.output
+        .Where(item => item.Length == 2 || item.Length == 3 || item.Length == 4 || item.Length ==7)
+        .Count())
+    .Sum();
+
+print(part1, "part1");
+
+#!csharp
+
+/// Part 2
+
+int part2 = 0;
+foreach (var entry in entries) {
+  (var input, var output) = entry;
+
+  var segmentOccurrences = 
+    input
+      .SelectMany(Self)
+      .GroupBy(Self).OrderBy(group => group.Count());
+  
+  var bottomLeft = segmentOccurrences.Single(group => group.Count() == 4).Key;
+  var topLeft = segmentOccurrences.Single(group => group.Count() == 6).Key;
+  var middleOrBottom = segmentOccurrences.Where(group => group.Count() == 7).Select(group => group.Key);
+  var topOrTopRight = segmentOccurrences.Where(group => group.Count() == 8).Select(group => group.Key);
+  var bottomRight = segmentOccurrences.Single(group => group.Count() == 9).Key;
+
+  var onePattern = input.Single(item => item.Length == 2);
+  var fourPattern = input.Single(item => item.Length == 4);
+
+  var inputWithoutFour = input.Where(item => item != fourPattern);
+  var middle = inputWithoutFour.SelectMany(Self).GroupBy(Self).Single(group => middleOrBottom.Contains(group.Key) && group.Count() == 6).Key;
+  var bottom = inputWithoutFour.SelectMany(Self).GroupBy(Self).Single(group => middleOrBottom.Contains(group.Key) && group.Count() == 7).Key;
+  
+  var inputWithoutOne = input.Where(item => item != onePattern);
+  var top = inputWithoutOne.SelectMany(Self).GroupBy(Self).Single(group => topOrTopRight.Contains(group.Key) && group.Count() == 8).Key;
+  var topRight = inputWithoutOne.SelectMany(Self).GroupBy(Self).Single(group => topOrTopRight.Contains(group.Key) && group.Count() == 7).Key;
+
+  int ToInt(string pattern, int orderOfMagnitude) {
+    var scale = (int)Math.Pow(10, orderOfMagnitude);
+    
+    bool IsMatch(string pattern, List<char> reference) {
+      return pattern.Length == reference.Count && pattern.Intersect(reference).Count() == reference.Count;
+    }
+
+    var zeroPattern = new List<char> { top, topRight, bottomRight, bottom, bottomLeft, topLeft };
+    if (IsMatch(pattern, zeroPattern)) {
+      return scale * 0;
+    }
+
+    if (pattern.Length == 2) {
+      return scale * 1;
+    }
+
+    var twoPattern = new List<char> { top, topRight, middle, bottomLeft, bottom };
+    if (IsMatch(pattern, twoPattern)) {
+      return scale * 2;
+    }
+
+    var threePattern = new List<char> { top, topRight, middle, bottomRight, bottom };
+    if (IsMatch(pattern, threePattern)) {
+      return scale * 3;
+    }
+
+    if (pattern.Length == 4) {
+      return scale * 4;
+    }
+
+    var fivePattern = new List<char> { top, topLeft, middle, bottomRight, bottom };
+    if (IsMatch(pattern, fivePattern)) {
+      return scale * 5;
+    }
+
+    var sixPattern = new List<char> { top, topLeft, bottomLeft, bottom, bottomRight, middle };
+    if (IsMatch(pattern, sixPattern)) {
+      return scale * 6;
+    }
+
+    if (pattern.Length == 3) {
+      return scale * 7;
+    }
+
+    if (pattern.Length == 7) {
+      return scale * 8;
+    }
+
+    var ninePattern = new List<char> { middle, topLeft, top, topRight, bottomRight, bottom };
+    if (IsMatch(pattern, ninePattern)) {
+      return scale * 9;
+    }
+
+    throw new ArgumentException();
+  }
+
+  var displayValue = output.Reverse().Select(ToInt).Sum();
+  part2 += displayValue;
+
+  // print($"{format(output)}: {displayValue}");
+}
+print(part2, "part2");
