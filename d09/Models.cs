@@ -30,7 +30,7 @@ public class Cell
 
   public IEnumerable<Cell> Neighbors { get; private set; }
 
-  public bool IsMinimum => this.value < this.Neighbors.Min(n => n.value);
+  public bool IsMinimum => this.Neighbors.All(n => this.value < n.value);
 
   public int RiskLevel => this.IsMinimum ? this.value + 1 : 0;
 
@@ -40,7 +40,7 @@ public class Cell
       : 0;
   
   public IEnumerable<Cell> Inlets 
-    => new [] { this }.Concat(this.Neighbors.Where(n => n.value != 9 && (n.value == (this.value + 1))).SelectMany(item => item.Inlets));
+    => new [] { this }.Concat(this.Neighbors.Where(n => n.value != 9 && n.value > this.value).SelectMany(item => item.Inlets));
 
   public override string ToString() => $"({this.x},{this.y}):{this.value}";
 }

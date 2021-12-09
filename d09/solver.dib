@@ -27,5 +27,5 @@ print(part1, "part1");
 #!csharp
 
 /// Part 2
-var part2 = grid.Where(cell => cell.IsMinimum).Select(cell => cell.BasinSize).OrderByDescending(Self).Take(3).Aggregate(1ul, (acc, item) => acc * item);
+var part2 = grid.Where(cell => cell.IsMinimum).Select(cell => cell.BasinSize).OrderByDescending(Self).Take(3).Aggregate((acc, item) => acc * item);
 print(part2);

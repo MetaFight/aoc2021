@@ -1,3 +1,4 @@
+using System.IO;
 using static System.Console;
 
 public static class Utils {
@@ -26,4 +27,7 @@ public static class Utils {
 
   public static void print<T>(T arg, string name = "", string delim = ", ")
     => WriteLine(format(arg, name, delim));
+  
+  public static void clearLog() => File.Delete("out.txt");
+  public static void log(string arg) => File.AppendAllText("out.txt", arg);
 }
