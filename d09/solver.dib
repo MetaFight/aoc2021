@@ -9,18 +9,17 @@ using static Utils;
 
 T Self<T>(T item) => item;
 
-#!csharp
-
-/// Part 1
 var lines = File.ReadLines("input.txt").ToList();
 
 int gridWidth = lines[0].Length;
 int gridHeight = lines.Count;
 
 var grid = string.Join("", lines).Select((item, index) => new Cell(int.Parse(item.ToString()), index, gridWidth, gridHeight)).ToList();
-
 grid.ForEach(cell => cell.MeetNeighbors(grid));
 
+#!csharp
+
+/// Part 1
 var part1 = grid.Sum(item => item.RiskLevel);
 print(part1, "part1");
 
@@ -28,4 +27,4 @@ print(part1, "part1");
 
 /// Part 2
 var part2 = grid.Where(cell => cell.IsMinimum).Select(cell => cell.BasinSize).OrderByDescending(Self).Take(3).Aggregate((acc, item) => acc * item);
-print(part2);
+print(part2, "part2");
