@@ -1,0 +1,110 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+#load "Models.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+var isOpening = (char symbol) => symbol switch {
+  '(' => true,
+  '[' => true,
+  '{' => true,
+  '<' => true,
+  _ => false
+};
+
+var getOpening = (char closing) => closing switch {
+  ')' => '(',
+  ']' => '[',
+  '}' => '{',
+  '>' => '<',
+  _ => throw new NotSupportedException()
+};
+var getClosing = (char opening) => opening switch {
+  '(' => ')',
+  '[' => ']',
+  '{' => '}',
+  '<' => '>',
+  _ => throw new NotSupportedException()
+};
+
+#!csharp
+
+/// Part 1
+
+var lines = File.ReadLines("input.txt").ToList();
+var illegalCharacters = new List<char>();
+
+foreach (var line in lines) {
+  var stack = new Stack<char>();
+
+  foreach (var symbol in line) {
+    if (isOpening(symbol)) {
+      stack.Push(symbol);
+    } else {
+      if(stack.Pop() != getOpening(symbol)) {
+        illegalCharacters.Add(symbol);
+        break;
+      }
+    }
+  }
+}
+
+int score = 
+  (illegalCharacters.Where(item => item == ')').Count() * 3) +
+  (illegalCharacters.Where(item => item == ']').Count() * 57) +
+  (illegalCharacters.Where(item => item == '}').Count() * 1197) +
+  (illegalCharacters.Where(item => item == '>').Count() * 25137);
+
+print(score, "part1");
+
+#!csharp
+
+/// Part 2
+
+var lines = File.ReadLines("input.txt").ToList();
+
+var completions = new List<IEnumerable<char>>();
+
+foreach (var line in lines) {
+  var stack = new Stack<char>();
+
+  foreach (var symbol in line) {
+    if (isOpening(symbol)) {
+      stack.Push(symbol);
+    } else {
+      if(stack.Pop() != getOpening(symbol)) {
+        stack.Clear();
+        break;
+      }
+    }
+  }
+
+  if (stack.Any()) {
+    var completion = 
+      stack
+        .Select(getClosing);
+    completions.Add(completion);
+  }
+}
+
+var getValue = (char opening) => opening switch {
+  ')' => 1,
+  ']' => 2,
+  '}' => 3,
+  '>' => 4,
+  _ => throw new NotSupportedException()
+};
+
+var scores = 
+  completions
+    .Select(item => item.Select(getValue).Aggregate(0ul, (acc, item) => (acc * 5) + (ulong)item))
+    .OrderBy(Self)
+    .ToList();
+
+var part2 = scores.Skip(scores.Count / 2).First();
+print(part2, "part2");
