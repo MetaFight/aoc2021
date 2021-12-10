@@ -85,9 +85,7 @@ foreach (var line in lines) {
   }
 
   if (stack.Any()) {
-    var completion = 
-      stack
-        .Select(getClosing);
+    var completion = stack.Select(getClosing);
     completions.Add(completion);
   }
 }
