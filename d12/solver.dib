@@ -53,6 +53,5 @@ var end = nodesByName["end"];
 var part2 = start.ChartLeasurelyCourseTo(end);
 
 var debug = String.Join(",", part2).Replace("end,", "end\n");
-File.WriteAllText("out.txt", debug);
 
 print(part2.Count(node => node == end), "part2");
