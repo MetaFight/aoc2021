@@ -1,0 +1,58 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+#load "Models.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+#!csharp
+
+/// Part 1
+
+// var links = File.ReadLines("test.input.txt").Select(item => item.Split("-")).ToList();
+// var nodesByName = links.SelectMany(pair => pair).Distinct().ToDictionary(item => item, item => new Node(item));
+
+// foreach(var pair in links) {
+//   var a = nodesByName[pair[0]];
+//   var b = nodesByName[pair[1]];
+//   a.Neighbors.Add(b);
+//   b.Neighbors.Add(a);
+// }
+
+// var start = nodesByName["start"];
+// var end = nodesByName["end"];
+// var part1 = start.ChartCourseTo(end);
+
+
+// print(part1.Count(node => node == end), "part1");
+
+#!csharp
+
+/// Part 2
+
+var links = File.ReadLines("input.txt").Select(item => item.Split("-")).ToList();
+var nodesByName = links.SelectMany(pair => pair).Distinct().ToDictionary(item => item, item => new Node(item));
+
+foreach(var pair in links) {
+  var a = nodesByName[pair[0]];
+  var b = nodesByName[pair[1]];
+  a.Neighbors.Add(b);
+  b.Neighbors.Add(a);
+}
+
+foreach (var node in nodesByName.Values) {
+  node.Neighbors = node.Neighbors.OrderBy(item => item.Name).ToList();
+}
+
+var start = nodesByName["start"];
+var end = nodesByName["end"];
+var part2 = start.ChartLeasurelyCourseTo(end);
+
+var debug = String.Join(",", part2).Replace("end,", "end\n");
+File.WriteAllText("out.txt", debug);
+
+print(part2.Count(node => node == end), "part2");

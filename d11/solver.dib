@@ -1,0 +1,58 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+#load "Models.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+#!csharp
+
+/// Part 1
+
+var lines = File.ReadLines("test.input.txt").ToList();
+
+int gridWidth = lines[0].Length;
+int gridHeight = lines.Count;
+
+var grid = string.Join("", lines).Select((item, index) => new Cell(int.Parse(item.ToString()), index, gridWidth, gridHeight)).ToList();
+grid.ForEach(cell => cell.MeetNeighbors(grid));
+
+const int stepCount = 100;
+ulong flashCount = 0;
+for (int step = 1; step <= stepCount; step++) {
+  grid.ForEach(cell => cell.Energize());
+  flashCount += (ulong)grid.Count(cell => cell.Flashed);
+  grid.ForEach(cell => cell.StepEnd());
+}
+
+print(flashCount, "part1");
+
+#!csharp
+
+/// Part 2
+
+var lines = File.ReadLines("input.txt").ToList();
+
+int gridWidth = lines[0].Length;
+int gridHeight = lines.Count;
+
+var grid = string.Join("", lines).Select((item, index) => new Cell(int.Parse(item.ToString()), index, gridWidth, gridHeight)).ToList();
+grid.ForEach(cell => cell.MeetNeighbors(grid));
+
+var  target = gridWidth * gridHeight;
+ulong step = 0;
+while(true) {
+  step++;
+  grid.ForEach(cell => cell.Energize());
+  var flashCount = grid.Count(cell => cell.Flashed);
+  if (flashCount == target) {
+    break;
+  }
+  grid.ForEach(cell => cell.StepEnd());
+}
+
+print(step, "part2");

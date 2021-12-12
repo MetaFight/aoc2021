@@ -2,7 +2,6 @@
 
 /// Common
 #load "../common/Utils.cs"
-#load "Models.cs"
 
 using System.IO;
 using static Utils;
