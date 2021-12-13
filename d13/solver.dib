@@ -1,0 +1,73 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+#!csharp
+
+/// Part 1
+
+public record Dot(int x, int y);
+
+var rawInput = File.ReadAllText("input.txt").Split("\r\n\r\n");
+var dots = rawInput[0].Split("\r\n").Select(line => line.Split(",")).Select(pair => new Dot(int.Parse(pair[0]), int.Parse(pair[1]))).ToList();
+var folds = rawInput[1]
+  .Split("\r\n")
+  .Select(line => line[11..].Split("="))
+  .Select(item => (axis: item[0], value: int.Parse(item[1]))
+  ).ToList();
+
+var fold = folds[0];
+print(fold);
+
+var affectedDots = dots.Where(dot => fold.axis == "x" ? dot.x > fold.value : dot.y > fold.value).ToList();
+var foldedDots = affectedDots.Select(dot => fold.axis == "x" ? dot with { x = fold.value - (dot.x - fold.value) } : dot with { y = fold.value - (dot.y - fold.value) }).ToList();
+
+dots = dots.Except(affectedDots).Concat(foldedDots).Distinct().ToList();
+
+var part1 = dots.Count;
+print(part1, "part1");
+
+#!csharp
+
+/// Part 2
+
+public record Dot(int x, int y);
+
+var rawInput = File.ReadAllText("input.txt").Split("\r\n\r\n");
+var dots = rawInput[0].Split("\r\n").Select(line => line.Split(",")).Select(pair => new Dot(int.Parse(pair[0]), int.Parse(pair[1]))).ToList();
+var folds = rawInput[1]
+  .Split("\r\n")
+  .Select(line => line[11..].Split("="))
+  .Select(item => (axis: item[0], value: int.Parse(item[1]))
+  ).ToList();
+
+var fold = folds[0];
+
+foreach (var fold in folds) {
+  var affectedDots = dots.Where(dot => fold.axis == "x" ? dot.x > fold.value : dot.y > fold.value).ToList();
+  var foldedDots = affectedDots.Select(dot => fold.axis == "x" ? dot with { x = fold.value - (dot.x - fold.value) } : dot with { y = fold.value - (dot.y - fold.value) }).ToList();
+
+  dots = dots.Except(affectedDots).Concat(foldedDots).Distinct().ToList();
+}
+
+var maxX = dots.Max(item => item.x);
+var maxY = dots.Max(item => item.y);
+
+for(int y = 0; y <= maxY; y++) {
+  for(int x = 0; x <= maxX; x++) {
+    var dot = dots.SingleOrDefault(item => item.x == x && item.y== y);
+    if (dot != null) {
+      Console.Write("#");
+    }
+    else {
+      Console.Write(".");
+    }
+  }
+  Console.WriteLine();
+}

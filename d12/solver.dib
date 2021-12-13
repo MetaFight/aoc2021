@@ -13,22 +13,22 @@ T Self<T>(T item) => item;
 
 /// Part 1
 
-// var links = File.ReadLines("test.input.txt").Select(item => item.Split("-")).ToList();
-// var nodesByName = links.SelectMany(pair => pair).Distinct().ToDictionary(item => item, item => new Node(item));
+var links = File.ReadLines("test.input.txt").Select(item => item.Split("-")).ToList();
+var nodesByName = links.SelectMany(pair => pair).Distinct().ToDictionary(item => item, item => new Node(item));
 
-// foreach(var pair in links) {
-//   var a = nodesByName[pair[0]];
-//   var b = nodesByName[pair[1]];
-//   a.Neighbors.Add(b);
-//   b.Neighbors.Add(a);
-// }
+foreach(var pair in links) {
+  var a = nodesByName[pair[0]];
+  var b = nodesByName[pair[1]];
+  a.Neighbors.Add(b);
+  b.Neighbors.Add(a);
+}
 
-// var start = nodesByName["start"];
-// var end = nodesByName["end"];
-// var part1 = start.ChartCourseTo(end);
+var start = nodesByName["start"];
+var end = nodesByName["end"];
+var part1 = start.ChartCourseTo(end);
 
 
-// print(part1.Count(node => node == end), "part1");
+print(part1.Count(node => node == end), "part1");
 
 #!csharp
 
