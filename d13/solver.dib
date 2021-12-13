@@ -61,10 +61,10 @@ for(int y = 0; y <= maxY; y++) {
   for(int x = 0; x <= maxX; x++) {
     var dot = dots.FirstOrDefault(item => item.x == x && item.y== y);
     if (dot != null) {
-      Console.Write("#");
+      Console.Write("##");
     }
     else {
-      Console.Write(".");
+      Console.Write("  ");
     }
   }
   Console.WriteLine();
