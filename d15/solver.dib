@@ -118,5 +118,25 @@ print(part1, "part1");
 
 /// Part 2
 
+var input = File.ReadLines("input.txt").ToList();
+var riskGridTemplate = input.Select(line => line.Select(digit => int.Parse(digit.ToString())).ToList()).ToList();
 
-// print(part2, "part2");
+var riskGrid = new List<List<int>>();
+for(int yIncrement = 0; yIncrement < 5; yIncrement++)
+{
+  foreach(var templateRow in riskGridTemplate) 
+  {
+    var resultRow = Enumerable.Range(0, 5).SelectMany(xIncrement => templateRow.Select(item => ((item - 1 + yIncrement + xIncrement) % 9) + 1)).ToList();
+    riskGrid.Add(resultRow);
+  }
+}
+
+readonly var start = new Position(x: 0, y: 0);
+readonly var goal = new Position(x: riskGrid[0].Count() - 1, y: riskGrid.Count() - 1);
+
+var cameFrom = FindPath(riskGrid, start, goal);
+
+var part2 = GetPathScore(cameFrom, riskGrid, start, goal, out var pathSet);
+
+print(part2, "part2");
+// Console.WriteLine(DrawGridAndPath(riskGrid, pathSet));
