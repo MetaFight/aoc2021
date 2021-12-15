@@ -1,0 +1,184 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+
+using System.IO;
+using static Utils;
+
+T Self<T>(T item) => item;
+
+public class Element {
+  public char Value { get; set; }
+  public Element Next { get; set; }
+}
+
+public record Rule(char from, char to, char toInsert);
+
+static List<Element> ExtractPolymerTemplate(List<string> input) {
+  var result = input[0].Select(el => new Element { Value = el }).ToList();
+  for (int i = 0; i < result.Count - 1; i++) {
+    result[i].Next = result[i+1];
+  }
+  return result;
+}
+
+static List<Rule> ExtractRules(List<string> input) {
+  return input.Skip(2).Select(line => new Rule(line[0], line[1], line[6])).ToList();
+}
+
+static void ExpandPolymer(Element start, IEnumerable<Rule> rules, int stepCount) {
+  for (int step = 0; step < stepCount; step++) {
+    var el = start;
+    while (el != null) {
+      var next = el.Next;
+
+      var matchingRule = rules.FirstOrDefault(rule => rule.from == el.Value && rule.to == next?.Value);
+      if (matchingRule != null) {
+        el.Next = new Element() { Value = matchingRule.toInsert, Next = next };
+      }
+      el = next;
+    }
+  }
+}
+
+static List<Element> AsList(Element start) {
+  var result = new List<Element>();
+  var el = start;
+  while (el != null) {
+    result.Add(el);
+    el = el.Next;
+  }
+  return result;
+}
+
+#!csharp
+
+/// Part 1
+
+int stepCount = 10;
+
+var input = File.ReadLines("test.input.txt").ToList();
+
+var polymer = ExtractPolymerTemplate(input);
+var rules = ExtractRules(input);
+
+var start = polymer[0];
+ExpandPolymer(start, rules, stepCount);
+
+var groups = AsList(start).GroupBy(el => el.Value).ToDictionary(group => group.Key, group => group.Count());
+var part1 = groups.Max(kvp => kvp.Value) - groups.Min(kvp => kvp.Value);
+
+print(part1, "part1");
+// print(groups.OrderByDescending(kvp => kvp.Value));
+print(groups.OrderBy(kvp => kvp.Key));
+
+#!csharp
+
+// /// Part 2
+
+// static Dictionary<char, int> ExpandRule(Rule rule, List<Rule> ruleSet) {
+//   var start = new Element() { Value = rule.from, Next = new Element() { Value = rule.to } };
+
+//   var el = start;
+//   while (el != null) {
+//     var next = el.Next;
+
+//     var matchingRule = ruleSet.FirstOrDefault(rule => rule.from == el.Value && rule.to == next?.Value);
+//     if (matchingRule != null) {
+//       el.Next = new Element() { Value = matchingRule.toInsert, Next = next };
+//     }
+//     el = next;
+//   }
+
+//   var elements = new List<Element>();
+//   el = start;
+//   while (el != null) {
+//     elements.Add(el);
+//     el = el.Next;
+//   }
+
+//   var counts = elements.GroupBy(el => el.Value).ToDictionary(item => item.Key, item => item.Count());
+//   return counts;
+// }
+
+// var input = File.ReadLines("test.input.txt").ToList();
+
+// var rules = ExtractRules(input);
+// var countsByRule = rules.ToDictionary(item => item, item => ExpandRule(item, rules));
+
+// var totals = new Dictionary<char, ulong>();
+
+
+// var el = polymer[0];
+// while (el != null) {
+//   var next = el.Next;
+
+//   var tempEl = el;
+//   var tempNext = next;
+//   for (int step = 0; step < 10; step++) {
+//     var matchingRule = rules.FirstOrDefault(rule => rule.from == tempEl.Value && rule.to == tempNext?.Value);
+//     if (matchingRule != null) {
+//       var counts = countsByRule[matchingRule];
+//       tempNext = new Element() { Value = matchingRule.toInsert };
+//       foreach(var kvp in counts) {
+//         totals[kvp.Key] = (totals.TryGetValue(kvp.Key, out var count) ? count : 0ul) + (ulong)kvp.Value;
+//       }
+//     } else {
+//       tempNext = null;
+//     }
+//   }
+//   el = next;
+// }
+
+// print(totals);
+
+// var mostCommon = totals.Max(kvp => kvp.Value);
+// var leastCommon = totals.Min(kvp => kvp.Value);
+
+// var part2 = mostCommon - leastCommon;
+
+// print(part2, "part2");
+
+#!csharp
+
+/// Part 2, take 2
+
+public record Rule(string key, char inserted, string out1, string out2);
+
+var input = File.ReadLines("input.txt").ToList();
+var rulesByKey = 
+  input
+    .Skip(2)
+    .Select(line => new Rule(line[0..2], line[6], new String(new [] { line[0], line[6] }), new String(new [] { line[6], line[1] })))
+    .ToDictionary(item => item.key, item => item);
+
+var pairTally = 
+  input[0]
+    .Take(input[0].Length - 1).Select((item, index) => input[0][index..(index+2)])
+    .GroupBy(Self).ToDictionary(group => group.Key, group => (ulong)group.Count());
+
+stepCount = 40;
+var elementTally = new Dictionary<char, ulong>();
+
+for (int step = 0; step < stepCount; step++) {
+  var stepTally = new Dictionary<string, ulong>();
+  elementTally.Clear();
+  
+  foreach(var (pair, count) in pairTally.Select(kvp => (kvp.Key, kvp.Value))) {
+    elementTally[pair[0]] = (elementTally.TryGetValue(pair[0], out var tally1) ? tally1 : 0) + count;
+    
+    if (rulesByKey.TryGetValue(pair, out var rule)) {
+      elementTally[rule.inserted] = (elementTally.TryGetValue(rule.inserted, out var tally2) ? tally2 : 0) + count;
+      stepTally[rule.out1] = (stepTally.TryGetValue(rule.out1, out var existing1) ? existing1 : 0) + count;
+      stepTally[rule.out2] = (stepTally.TryGetValue(rule.out2, out var existing2) ? existing2 : 0) + count;
+    }
+  }
+  pairTally = stepTally;
+}
+
+var lastElement = input[0].Last();
+elementTally[lastElement] = (elementTally.TryGetValue(lastElement, out var tallyLast) ? tallyLast : 0) + 1;
+
+var part2 = elementTally.Max(kvp => kvp.Value) - elementTally.Min(kvp => kvp.Value);
+print(part2, "part2");
