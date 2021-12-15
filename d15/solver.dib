@@ -1,0 +1,122 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+
+using System.IO;
+using static Utils;
+
+record Position(int x, int y);
+
+static Dictionary<Position, Position> FindPath(List<List<int>> riskGrid, Position start, Position goal) {
+  var cameFrom = new Dictionary<Position, Position>();
+
+  var width = riskGrid[0].Count();
+  var height = riskGrid.Count();
+
+  var openSet = new List<Position>() { start };
+  var gScores = new Dictionary<Position, float>() { { start, 0 } };
+  var h = (Position pos) => gScores.GetValueOrDefault(pos, float.PositiveInfinity) + (riskGrid[pos.y][pos.x] / 10f);
+
+  var fScore = (Position pos) => gScores.GetValueOrDefault(pos, float.PositiveInfinity) + h(pos);
+
+  while (openSet.Count > 0) {
+    // print($"count: {openSet.Count}");
+    // TODO: optimise this lookup
+    var current = openSet.OrderBy(item => fScore(item)).First();
+
+    if (current == goal) {
+      print("success!");
+      break;
+    }
+    // print($"chose: {current} with fScore: {fScore(current)}");
+
+    openSet.Remove(current);
+
+    var neighbors = 
+      new [] { (x: -1, y: 0), (x: 0, y: -1), (x: 1, y: 0), (x: 0, y: 1) }
+        .Select(offset => new Position(x: offset.x + current.x, y: offset.y + current.y))
+        .Where(pos => pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height);
+
+    foreach (var neighbor in neighbors) 
+    {
+      var tentativeGScore = gScores.GetValueOrDefault(current) + riskGrid[neighbor.y][neighbor.x];
+      if (tentativeGScore < gScores.GetValueOrDefault(neighbor, float.PositiveInfinity)) {
+        cameFrom[neighbor] = current;
+        gScores[neighbor] = tentativeGScore;
+        
+        if (!openSet.Contains(neighbor)) {
+          openSet.Add(neighbor);
+        }
+      }
+    }
+  }
+
+  return cameFrom;
+}
+
+static string DrawGridAndPath(List<List<int>> riskGrid, HashSet<Position> pathSet) {
+  var result = new StringBuilder();
+
+  var width = riskGrid[0].Count();
+  var height = riskGrid.Count();
+
+  for(int y = 0; y < height; y++)
+  {
+    for(int x = 0; x < width; x++)
+    {
+      var pos = new Position(x, y);
+      var risk = riskGrid[y][x];
+      if (pathSet.Contains(pos))
+      {
+        result.Append($"({risk})");
+      }
+      else
+      {
+        result.Append($" {risk} ");
+      }
+    }
+    result.AppendLine();
+  }
+
+  return result.ToString();
+}
+
+static ulong GetPathScore(Dictionary<Position, Position> cameFrom, List<List<int>> riskGrid, Position start, Position goal, out HashSet<Position> pathSet) {
+  var result = 0ul;
+  var pos = goal;
+  var totalPath = new List<Position>() { pos };
+  pathSet = new HashSet<Position>() { pos };
+  
+  while(pos != start) {
+    result += (ulong)riskGrid[pos.y][pos.x];
+    pos = cameFrom[pos];
+    totalPath.Insert(0, pos);
+    pathSet.Add(pos);
+  }
+  return result;
+}
+
+#!csharp
+
+/// Part 1
+
+var input = File.ReadLines("input.txt").ToList();
+var riskGrid = input.Select(line => line.Select(digit => int.Parse(digit.ToString())).ToList()).ToList();
+
+readonly var start = new Position(x: 0, y: 0);
+readonly var goal = new Position(x: riskGrid[0].Count() - 1, y: riskGrid.Count() - 1);
+
+var cameFrom = FindPath(riskGrid, start, goal);
+
+var part1 = GetPathScore(cameFrom, riskGrid, start, goal, out var pathSet);
+
+print(part1, "part1");
+// Console.WriteLine(DrawGridAndPath(riskGrid, pathSet));
+
+#!csharp
+
+/// Part 2
+
+
+// print(part2, "part2");
