@@ -16,14 +16,23 @@ public record Packet(bool[] bits)
 
     public static Packet FromHex(string hex) => new Packet(ToBits(PadHex(hex)).ToArray());
 
-    public string BitString => ToBitString(this.bits);
+    //public string BitString => ToBitString(this.bits);
     public int Version => ToInt(this.bits[0..(0 + 3)]);
     public int TypeId => ToInt(this.bits[3..(3 + 3)]);
 
-    public bool IsLiteral => this.TypeId == 4;
+    public bool IsLiteral => this.TypeId == LiteralTypeId;
+    public bool IsOperator => !this.IsLiteral;
+
+    public bool OperatorLengthTypeId => this.bits[6];
+
+    public int OperatorTotalLength => this.IsOperator && !this.OperatorLengthTypeId ? ToInt(this.bits[7..(7 + 15)]) : -1;
+    //public string OperatorTotalLengthBitString => this.IsOperator && !this.OperatorLengthTypeId ? ToBitString(this.bits[7..(7 + 15)]) : string.Empty;
+
+    public int OperatorSubPacketCount => this.IsOperator && this.OperatorLengthTypeId ? ToInt(this.bits[7..(7 + 11)]) : -1;
+    //public string OperatorSubPacketCountBitString => this.IsOperator && this.OperatorLengthTypeId ? ToBitString(this.bits[7..(7 + 11)]) : string.Empty;
 
     public long LiteralValue => this.IsLiteral ? this.GetLiteralValue(out _) : -1;
-    public string LiteralValueBitString => this.IsLiteral ? ToBitString(this.bits[6..this.PacketLength]) : string.Empty;
+    //public string LiteralValueBitString => this.IsLiteral ? ToBitString(this.bits[6..this.PacketLength]) : string.Empty;
     private long GetLiteralValue(out int packetLength)
     {
         if (!this.IsLiteral)
@@ -47,13 +56,6 @@ public record Packet(bool[] bits)
         return ToLong(literalBits);
     }
 
-    public bool IsOperator => !this.IsLiteral;
-    public bool OperatorLengthTypeId => this.bits[6];
-
-    public int OperatorTotalLength => this.IsOperator && !this.OperatorLengthTypeId ? ToInt(this.bits[7..(7 + 15)]) : -1;
-    public string OperatorTotalBitString => this.IsOperator && !this.OperatorLengthTypeId ? ToBitString(this.bits[7..(7 + 15)]) : string.Empty;
-    public int OperatorSubPacketCount => this.IsOperator && this.OperatorLengthTypeId ? ToInt(this.bits[7..(7 + 11)]) : -1;
-    public string OperatorSubPacketCountBitString => this.IsOperator && this.OperatorLengthTypeId ? ToBitString(this.bits[7..(7 + 11)]) : string.Empty;
 
     public long OperatorValue => this.GetOperatorValue();
     private long GetOperatorValue()
@@ -87,35 +89,23 @@ public record Packet(bool[] bits)
 
         if (!this.OperatorLengthTypeId)
         {
-            //print("type 0");
-
             var result = new List<Packet>();
             int remainingBits = this.OperatorTotalLength;
             int start = 3 + 3 + 1 + 15;
             int end = start + remainingBits;
             int offset = start;
 
-            if (end >= this.bits.Length)
-            {
-                print("WHOAH!  SOMETHING'S WRONG HERE!!!");
-            }
-
             while (remainingBits > 0 && offset < end)
             {
-                //print($"remaining bits: {remainingBits}, offset: {offset}, end: {end}, bits.Length: {this.bits.Length}");
                 var packet = new Packet(this.bits[offset..end]);
                 result.Add(packet);
                 offset += packet.PacketLength;
-
-                //print($"found: {packet}");
             }
 
             return result;
         }
         else
         {
-            //print("type 1");
-
             var result = new List<Packet>();
             int remainingPackets = this.OperatorSubPacketCount;
             int start = 3 + 3 + 1 + 11;
@@ -124,21 +114,10 @@ public record Packet(bool[] bits)
 
             while (remainingPackets > 0 && offset < end)
             {
-                //print($"remaining packets: {remainingPackets}, offset: {offset}, end: {end}");
                 var packet = new Packet(this.bits[offset..end]);
                 result.Add(packet);
                 offset += packet.PacketLength;
                 remainingPackets--;
-
-                try
-                {
-                    //print($"found: {packet}");
-                }
-                catch (Exception ex)
-                {
-                    var length = packet.PacketLength;
-                    throw;
-                }
             }
 
             return result;
@@ -152,8 +131,8 @@ public record Packet(bool[] bits)
         ? (this.GetLiteralValue(out var length) > -1 ? length : -1)
         : (
             3 + 3 + 1 +
-            (!this.OperatorLengthTypeId ? 15 : 11) +
-            (!this.OperatorLengthTypeId ? this.OperatorTotalLength : 0) +
+            (this.OperatorLengthTypeId ? 11 : 15) +
+            (this.OperatorLengthTypeId ? 0 : this.OperatorTotalLength) +
             (this.OperatorLengthTypeId ? this.GetOperatorSubPackets().Sum(item => item.PacketLength) : 0)
         );
 }
