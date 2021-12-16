@@ -11,26 +11,28 @@ record Position(int x, int y);
 #!csharp
 
 /// Part 1
-
+static string PadHex(string hex) => hex.PadRight(4* ((hex.Length / 4) + 1), '0');
 static string ToBitString(IEnumerable<bool> bits) => new String(bits.Select(item => item ? '1' : '0').ToArray());
 static string ToBitString(string hex)
   => String.Join(
       "",
       Enumerable
-        .Range(0, 1 + (hex.Length / 4))
+        .Range(0, (int)Math.Ceiling(hex.Length / 4f))
         .Select(item => item * 4)
-        .Select(offset => Convert.ToString(Convert.ToInt32(hex[offset..Math.Min(hex.Length, offset+4)], 16), 2).PadLeft(8, '0')));
+        .Select(offset => Convert.ToString(Convert.ToInt32(hex[offset..Math.Min(hex.Length, offset+4)], 16), 2).PadLeft(16, '0')));
 static IEnumerable<bool> ToBits(string hex) => ToBitString(hex).Select(item => item == '1').ToList();
 static int ToInt(IEnumerable<bool> bits) => bits.Reverse().Select((item, index) => (item ? 1 : 0) << index).Sum();
 
 public record Packet(bool[] bits) {
+  public static Packet FromHex(string hex) => new Packet(ToBits(PadHex(hex)).ToArray());
+
+  // public string BitString => ToBitString(this.bits);
   public int Version => ToInt(this.bits[0..(0+3)]);
   public int TypeId => ToInt(this.bits[3..(3+3)]);
 
   public bool IsLiteral => this.TypeId == 4;
   public int LiteralValue => this.IsLiteral ? this.GetLiteralValue(out _) : -1;
-  public string LiteralValueBitString => this.IsLiteral ? ToBitString(this.bits[6..this.LiteralPacketLength]) : string.Empty;
-  public int LiteralPacketLength => this.GetLiteralValue(out var length) > -1 ? length : -1;
+  // public string LiteralValueBitString => this.IsLiteral ? ToBitString(this.bits[6..this.PacketLength]) : string.Empty;
   public int GetLiteralValue(out int packetLength) {
     if (!this.IsLiteral) {
       packetLength = -1;
@@ -60,37 +62,37 @@ public record Packet(bool[] bits) {
   // public string OperatorSubPacketCountBitString => this.OperatorLengthTypeId ? ToBitString(this.bits[7..(7+11)]) : string.Empty;
 
   public IEnumerable<Packet> GetOperatorSubPackets() {
+    if (this.IsLiteral) {
+      return Enumerable.Empty<Packet>();
+    }
+
     if (!this.OperatorLengthTypeId)
     {
-      // print("type 0");
+      print("type 0");
       var result = new List<Packet>();
       int remainingBits = this.OperatorTotalLength;
       int start = 3 + 3 + 1 + 15;
       int end = start + remainingBits;
       int offset = start;
 
-      while (remainingBits > 0 && offset < end) {
+      if (end >= this.bits.Length) {
+        print("WHOAH!  SOMETHING'S WRONG HERE!!!");
+      }
+
+      while (remainingBits > 0 && offset < end && end <= this.bits.Length) {
         print($"remaining bits: {remainingBits}, offset: {offset}, end: {end}, bits.Length: {this.bits.Length}");
         var packet = new Packet(this.bits[offset..end]);
         result.Add(packet);
+        offset += packet.PacketLength;
         
-        if (packet.IsLiteral) {
-          var value = packet.GetLiteralValue(out var length);
-          print($"found literal of length: {length} and value: {value} composed of bits: {ToBitString(packet.bits)}");
-          offset += length;
-        }
-
-        if (packet.IsOperator) {
-          // TODO: actually do stuff
-          break;
-        }
+        print($"found: {packet}");
       }
 
       return result;
     } 
     else
     {
-      // print("type 1");
+      print("type 1");
       
       var result = new List<Packet>();
       int remainingPackets = this.OperatorSubPacketCount;
@@ -98,39 +100,53 @@ public record Packet(bool[] bits) {
       int end = this.bits.Length;
       int offset = start;
 
-      while (remainingPackets > 0) {
+      while (remainingPackets > 0 && offset < end) {
         print($"remaining packets: {remainingPackets}, offset: {offset}, end: {end}");
         var packet = new Packet(this.bits[offset..end]);
         result.Add(packet);
+        offset += packet.PacketLength;
         remainingPackets--;
-        
-        if (packet.IsLiteral) {
-          var value = packet.GetLiteralValue(out var length);
-          print($"found literal of length: {length} and value: {value} composed of bits: {ToBitString(packet.bits)}");
-          offset += length;
-        }
 
-        if (packet.IsOperator) {
-          // TODO: actually do stuff
-          break;
-        }
+        print($"found: {packet}");
       }
 
       return result;
     }
   }
+
+  public IEnumerable<Packet> GetAllPackets() => new [] { this}.Concat(this.GetOperatorSubPackets().SelectMany(packet => packet.GetAllPackets())).ToList();
+
+  public int PacketLength
+    => this.IsLiteral
+      ? (this.GetLiteralValue(out var length) > -1 ? length : -1)
+      : (
+          3 + 3 + 1 + 
+          (!this.OperatorLengthTypeId ? 15 : 11) + 
+          (!this.OperatorLengthTypeId ? this.OperatorTotalLength : 0) + 
+          (this.OperatorLengthTypeId ? this.GetOperatorSubPackets().Sum(item => item.PacketLength) : 0)
+      );
 }
 
-// var input = File.ReadLines("test.input.txt").ToList();
-var test1 = "38006F45291200";
-var test2 = "EE00D40C823060";
-var input = test2;
-print(input);
-var packet = new Packet(ToBits(input).ToArray());
-print(packet);
-packet.GetOperatorSubPackets();
+var tests = new[] {
+/*  0  */  "D2FE28",
+/*  1  */  "38006F45291200",
+/*  2  */  "EE00D40C823060",
+/*  3  */  "8A004A801A8002F478",              // 16 = (4 + [ (1 + [ (5 + [6]) ]) ])
+/*  4  */  "620080001611562C8802118E34",      // 12 = (3 + [ (? + [? + ?]) + (? + [? + ?]) ])
+/*  5  */  "C0015000016115A2E0802F182340",    // 23 = (? + [ (? + [? + ?]) + (? + [? + ?]) ])  w/ different OperatorLengthTypeId than above
+/*  6  */  "A0016C880162017C3686B18A3D4780",  // 31 = (? + [ (? + [ (? + [? + ? + ? + ? + ?]) ])  ])
 
-// print(part1, "part1");
+};
+
+var input = tests[6];
+input = File.ReadAllText("input.txt");
+
+var packet = Packet.FromHex(input);
+var allPackets = packet.GetAllPackets();
+print(allPackets.Count(), "total packet count");
+
+var part1 = allPackets.Select(item => item.Version).Sum();
+print(part1, "part1");
 
 #!csharp
 
