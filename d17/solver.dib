@@ -1,0 +1,88 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+
+using System.IO;
+using static Utils;
+
+#!csharp
+
+/// Part 1
+
+record Rectangle(int x1, int x2, int y1, int y2)
+{
+  public static Rectangle CreateNormalised(int x1, int x2, int y1, int y2) => new Rectangle(Math.Min(x1, x2), Math.Max(x1, x2), Math.Min(y1, y2), Math.Max(y1, y2));
+  public bool Contains(int x, int y) => x >= x1 && x <= x2 && y >= y1 && y <= y2;
+}
+
+var input = File.ReadAllText("input.txt")[15..].Replace("..", " ").Replace(", y=", " ").Split().Select(item => int.Parse(item)).ToList();
+
+var targetArea = Rectangle.CreateNormalised(input[0], input[1], input[2], input[3]);
+
+var finalYVelocity = targetArea.y1;
+var initialYVelocity = -(finalYVelocity + 1);
+
+var velocity = initialYVelocity;
+var yPosition = 0;
+while (velocity > 0) {
+  yPosition += velocity;
+  velocity--;
+}
+
+print(yPosition, "part1");
+
+#!csharp
+
+/// Part 2
+
+int CalculateXVelocityLowerBound() {
+  var threshold = targetArea.x1;
+  print(threshold, "threshold");
+  var xPosition = 0;
+  var xVelocity = 0;
+  while(xPosition < threshold) {
+    xVelocity++;
+    xPosition += xVelocity;
+  }
+  return xVelocity;
+}
+
+var xVelocityLowerBound = CalculateXVelocityLowerBound();
+var xVelocityUpperBound = targetArea.x2;
+
+var yVelocityLowerBound = finalYVelocity;
+var yVelocityUpperBound = initialYVelocity;
+
+static bool WillOverlapTarget(int initialXVelocity, int initialYVelocity, Rectangle target) {
+  int x = 0;
+  int y = 0;
+  int vx = initialXVelocity;
+  int vy = initialYVelocity;
+
+  while(!target.Contains(x, y) && x < target.x2, && y > target.y1)
+  {
+    x += vx;
+    y += vy;
+    if (vx > 0) {
+      vx--;
+    }
+    vy--;
+  }
+
+  return target.Contains(x, y);
+
+}
+
+int viableVelocityCount = 0;
+foreach(var yVelocity in Enumerable.Range(yVelocityLowerBound, yVelocityUpperBound - yVelocityLowerBound + 1))
+{
+  foreach(var xVelocity in Enumerable.Range(xVelocityLowerBound, xVelocityUpperBound - xVelocityLowerBound + 1))
+  {
+    if (WillOverlapTarget(xVelocity, yVelocity, targetArea)) {
+      viableVelocityCount++;
+    }
+  }
+}
+
+ print(viableVelocityCount, "part2");
