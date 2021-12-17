@@ -38,7 +38,6 @@ print(yPosition, "part1");
 
 int CalculateXVelocityLowerBound() {
   var threshold = targetArea.x1;
-  print(threshold, "threshold");
   var xPosition = 0;
   var xVelocity = 0;
   while(xPosition < threshold) {
@@ -71,18 +70,13 @@ static bool WillOverlapTarget(int initialXVelocity, int initialYVelocity, Rectan
   }
 
   return target.Contains(x, y);
-
 }
 
-int viableVelocityCount = 0;
-foreach(var yVelocity in Enumerable.Range(yVelocityLowerBound, yVelocityUpperBound - yVelocityLowerBound + 1))
-{
-  foreach(var xVelocity in Enumerable.Range(xVelocityLowerBound, xVelocityUpperBound - xVelocityLowerBound + 1))
-  {
-    if (WillOverlapTarget(xVelocity, yVelocity, targetArea)) {
-      viableVelocityCount++;
-    }
-  }
-}
+int viableVelocityCount =
+  Enumerable
+    .Range(xVelocityLowerBound, xVelocityUpperBound - xVelocityLowerBound + 1)
+    .SelectMany(vx => Enumerable.Range(yVelocityLowerBound, yVelocityUpperBound - yVelocityLowerBound + 1).Select(vy => (x: vx, y: vy)))
+    .Where(v => WillOverlapTarget(v.x, v.y, targetArea))
+    .Count();
 
  print(viableVelocityCount, "part2");
