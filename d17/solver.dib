@@ -60,7 +60,7 @@ static bool WillOverlapTarget(int initialXVelocity, int initialYVelocity, Rectan
   int vx = initialXVelocity;
   int vy = initialYVelocity;
 
-  while(!target.Contains(x, y) && x < target.x2, && y > target.y1)
+  while(!target.Contains(x, y) && x < target.x2 && y > target.y1)
   {
     x += vx;
     y += vy;
