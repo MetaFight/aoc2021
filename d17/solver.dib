@@ -36,18 +36,22 @@ print(yPosition, "part1");
 
 /// Part 2
 
-int CalculateXVelocityLowerBound() {
-  var threshold = targetArea.x1;
-  var xPosition = 0;
-  var xVelocity = 0;
-  while(xPosition < threshold) {
-    xVelocity++;
-    xPosition += xVelocity;
-  }
-  return xVelocity;
-}
+// Let's work out the minimum initial X velocity required to hit the target area.
+// The relationship between the horizontal gap and the initial X velocity is a triangle number:
+// xGap = (v_x * (v_x + 1)) / 2
+// rearrange stuff:
+// 2 * xGap = v_x^2 + v_x
+// 0 = v_x^2 + v_x - (2*xGap)
 
-var xVelocityLowerBound = CalculateXVelocityLowerBound();
+// this gives us a quadratic of the form:
+// 0 = ax^2 + bx + c
+
+int a = 1;
+int b = 1;
+int c = -(2 * targetArea.x1);
+
+// Apply the Shridharacharaya formula to work out initial X velocity required to reach target area lower bound.
+var xVelocityLowerBound = (int)Math.Ceiling((-b + Math.Sqrt(Math.Pow(-b, 2) - (4 * (a * c) ))) / 2f);
 var xVelocityUpperBound = targetArea.x2;
 
 var yVelocityLowerBound = finalYVelocity;
@@ -79,4 +83,4 @@ int viableVelocityCount =
     .Where(v => WillOverlapTarget(v.x, v.y, targetArea))
     .Count();
 
- print(viableVelocityCount, "part2");
+print(viableVelocityCount, "part2"); 
