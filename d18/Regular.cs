@@ -9,13 +9,14 @@ public class Regular : Base
     private void Split()
     {
         var asSplit = this.AsSplit();
-        if (this.parent.Left == this)
+        if (this.Parent!.Left == this)
         {
-            this.parent.Left = asSplit;
+            this.Parent.Left = asSplit;
         }
-        else
+
+        if (this.Parent!.Right == this)
         {
-            this.parent.Right = asSplit;
+            this.Parent.Right = asSplit;
         }
     }
 
@@ -23,11 +24,13 @@ public class Regular : Base
       => new Pair(
         left: new Regular((int)Math.Floor(this.Value / 2f)),
         right: new Regular((int)Math.Ceiling(this.Value / 2f)),
-        parent: this.parent);
+        parent: this.Parent);
 
     public override bool CanReduce => this.CanSplit;
 
     public override void Reduce() => this.Split();
+
+    public override ulong Magnitude => (ulong)this.Value;
 
     public override string ToString() => this.Value.ToString();
 }

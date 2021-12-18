@@ -1,50 +1,59 @@
 public class Pair : Base
 {
-    public static Pair Parse(string encoded, out int charsRead)
+    public static Pair Parse(string encoded, out int charsRead, Pair? parent = null)
     {
         charsRead = 0;
 
-        static Base ParseElement(string encoded, ref int charsRead)
+        static Base ParseElement(string encoded, ref int charsRead, Pair? parent = null)
         {
             Base result;
+
             char nextChar = encoded[charsRead];
             if (nextChar == '[')
             {
-                result = Parse(encoded[charsRead..], out var readCount);
+                result = Parse(encoded[charsRead..], out var readCount, parent);
                 charsRead += readCount;
             }
             else
             {
-                result = new Regular(int.Parse(nextChar.ToString()));
+                result = new Regular(int.Parse(nextChar.ToString()), parent);
                 charsRead++;
             }
+
             return result;
         }
+
+        var pair = new Pair(null, null, parent);
 
         // opening bracket
         charsRead++;
         // left element
-        Base left = ParseElement(encoded, ref charsRead);
+        Base left = ParseElement(encoded, ref charsRead, pair);
         // comma
         charsRead++;
         // right element
-        Base right = ParseElement(encoded, ref charsRead);
+        Base right = ParseElement(encoded, ref charsRead, pair);
         // closing bracket
         charsRead++;
 
-        var result = new Pair(left, right);
-        left.SetParent(result);
-        right.SetParent(result);
+        pair.Left = left;
+        pair.Right = right;
 
-        return result;
+        return pair;
     }
 
-    public Pair(Base left, Base right, Pair? parent = null) : base(parent)
+    public Pair(Base? left = null, Base? right = null, Pair? parent = null) : base(parent)
     {
-        this.Left = left;
-        this.Left.SetParent(this);
-        this.Right = right;
-        this.Right.SetParent(this);
+        if (left != null)
+        {
+            left.Parent = this;
+            this.Left = left;
+        }
+        if (right != null)
+        {
+            right.Parent = this;
+            this.Right = right;
+        }
     }
 
     public Base Left { get; set; }
@@ -53,7 +62,7 @@ public class Pair : Base
     private bool CanExplode
         => this.Left is Regular &&
             this.Right is Regular &&
-            this.parent?.parent?.parent?.parent != null;
+            this.Parent?.Parent?.Parent?.Parent != null;
 
     private bool RecursiveCanExplode
         => this.CanExplode ||
@@ -88,7 +97,7 @@ public class Pair : Base
         var current = this;
         while (current != null)
         {
-            var parent = current.parent;
+            var parent = current.Parent;
 
             if (parent?.Right == current)
             {
@@ -108,7 +117,7 @@ public class Pair : Base
         current = this;
         while (current != null)
         {
-            var parent = current.parent;
+            var parent = current.Parent;
 
             if (parent?.Left == current)
             {
@@ -135,15 +144,16 @@ public class Pair : Base
         }
 
         // Replace with zero
-        if (this.parent != null)
+        if (this.Parent != null)
         {
-            if (this.parent.Left == this)
+            if (this.Parent.Left == this)
             {
-                this.parent.Left = new Regular(0, this);
+                this.Parent.Left = new Regular(0, this.Parent);
             }
-            else
+
+            if (this.Parent.Right == this)
             {
-                this.parent.Right = new Regular(0, this);
+                this.Parent.Right = new Regular(0, this.Parent);
             }
         }
     }
@@ -169,6 +179,8 @@ public class Pair : Base
             return;
         }
     }
+
+    public override ulong Magnitude => (3 * this.Left.Magnitude) + (2 * this.Right.Magnitude);
 
     public override string ToString() => $"[{this.Left},{this.Right}]";
 }

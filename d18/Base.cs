@@ -1,12 +1,12 @@
 public abstract class Base
 {
-    protected Pair? parent;
+    public Base(Pair? parent = null) { this.Parent = parent; }
 
-    public Base(Pair? parent = null) { this.parent = parent; }
-    
-    public void SetParent(Pair parent) => this.parent = parent;
+    public Pair? Parent { get; set; }
 
     public virtual bool CanReduce => false;
 
     public abstract void Reduce();
+
+    public abstract ulong Magnitude { get; }
 }
