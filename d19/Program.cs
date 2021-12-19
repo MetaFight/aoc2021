@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using Common;
+using System.IO;
 using static Utils;
 
 var process =
@@ -20,39 +21,30 @@ var testInput = process(File.ReadAllText("test.input.txt"));
 
 static void Part1(Dictionary<int, List<Vector3>> beaconsByScanner)
 {
-    var beaconDeltasByScanner = new Dictionary<int, List<double>>();
-    foreach (var kvp in beaconsByScanner)
-    {
-        var scanner = kvp.Key;
-        var beacons = kvp.Value;
-
-        var beaconDeltas = new List<double>();
-        for (int i = 0; i < beacons.Count; i++)
-        {
-            for (int j = i + 1; j < beacons.Count; j++)
-            {
-                var a = beacons[i];
-                var b = beacons[j];
-
-                // Consider storing this alongside source vectors to avoid having to look them up again.
-                var diffVector = a - b;
-                beaconDeltas.Add(diffVector.Length);
-            }
-        }
-        beaconDeltasByScanner[scanner] = beaconDeltas;
-    }
+    var beaconPairsByScanner =
+        beaconsByScanner.ToDictionary(
+            kvp => kvp.Key, 
+            kvp => kvp.Value.SelectMany((left, index) => kvp.Value.Skip(index + 1).Select(right => new BeaconPair(left, right))).ToList());
 
     var cartesianProduct = 
-        beaconDeltasByScanner
+        beaconPairsByScanner
             .SelectMany((left, index) => 
-                beaconDeltasByScanner
+                beaconPairsByScanner
                     .Skip(index + 1)
-                    .Select(right => (scannerA: left.Key, scannerB: right.Key, overlap: left.Value.Intersect(right.Value).Count()))
+                    .Select(right => 
+                        (
+                            scannerA: left.Key,
+                            scannerABeacons: left.Value,
+                            scannerB: right.Key,
+                            scannerBBeacons: right.Value,
+                            overlap: left.Value.Select(pair => pair.Distance).Intersect(right.Value.Select(pair => pair.Distance)).Count()
+                        )
+                    )
             )
             .ToList();
 
     print(cartesianProduct.Count, "candidates");
-    print(cartesianProduct.OrderByDescending(item => item.overlap).Take(5), "top5");
+    print(cartesianProduct.OrderByDescending(item => item.overlap).Take(5).Select(item => (item.scannerA, item.scannerB, item.overlap)), "top5");
 
     //print(current.Magnitude, "part1");
 }
@@ -71,4 +63,9 @@ record Vector3(int x, int y, int z)
         => new Vector3(leftHand.x - rightHand.x, leftHand.y - rightHand.y, leftHand.z - rightHand.z);
 
     public double Length => Math.Sqrt((x * x) + (y * y) + (z * z));
+}
+
+record BeaconPair(Vector3 a, Vector3 b)
+{
+    public double Distance = (a - b).Length;
 }
