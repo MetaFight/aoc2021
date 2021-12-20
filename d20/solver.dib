@@ -1,0 +1,184 @@
+#!csharp
+
+/// Common
+#load "../common/Utils.cs"
+
+using System.IO;
+using static Utils;
+
+#!csharp
+
+/// Part 1
+
+public abstract class Base {
+  protected Pair parent;
+  public void SetParent(Pair parent) => this.parent = parent;
+  public Base(Pair parent = null) { this.parent = parent; }
+  public virtual bool CanExplode => false;
+  public virtual bool CanSplit => false;
+}
+
+public class Regular : Base {
+  public int Value { get; set; }
+
+  public Regular(int value, Pair parent = null) : base(parent) { this.Value = value; }
+  
+  public override bool CanSplit => this.Value >= 10;
+
+  public Pair AsSplit()
+    => new Pair(
+      left: new Regular((int)Math.Floor(this.Value / 2f)),
+      right: new Regular((int)Math.Ceiling(this.Value / 2f)),
+      parent: this.parent);
+
+  public override string ToString() => this.Value.ToString();
+}
+
+public class Pair : Base {
+  public static Pair Parse(string encoded, out int charsRead) {
+    charsRead = 0;
+
+    static Base ParseElement(string encoded, ref int charsRead) {
+      Base result;
+      char nextChar = encoded[charsRead];
+      if (nextChar == '[') {
+        result = Parse(encoded[1..], out var readCount);
+        charsRead += readCount;
+      } else {
+        result = new Regular(int.Parse(nextChar.ToString()));
+        charsRead++;
+      }
+      return result;
+    }
+
+    // opening bracket
+    charsRead++;
+    // left element
+    Base left = ParseElement(encoded, ref charsRead);
+    // comma
+    charsRead++;
+    // right element
+    Base right  = ParseElement(encoded, ref charsRead);
+    // closing bracket
+    charsRead++;
+
+    var result = new Pair(left, right);
+    left.SetParent(result);
+    right.SetParent(result);
+
+    return result;
+  }
+
+  private Base left;
+  private Base right;
+
+  public Pair(Base left, Base right, Pair parent = null) : base(parent)
+  { 
+    this.left = left;
+    this.left.SetParent(this);
+    this.right = right; 
+    this.right.SetParent(this);
+  }
+
+  public override bool CanExplode 
+    => this.left is Regular &&
+       this.right is Regular &&
+       this.parent?.parent?.parent?.parent != null;
+
+  public void Explode()
+  {
+    if (!this.CanExplode) {
+      return;
+    }
+
+    // Find leftTarget
+    Regular leftTarget = null;
+    var current = this;
+    while(current != null) 
+    {
+      var parent = current.parent;
+
+      if (parent.right == current) {
+        var candidateLeft = parent.left;
+        while(candidateLeft is Pair leftPair) {
+          candidateLeft = leftPair.right;
+        }
+        leftTarget = candidateLeft as Regular;
+        break;
+      }
+      current = parent;
+    }
+
+    // Find rightTarget
+    Regular rightTarget = null;
+    current = this;
+    while(current != null) 
+    {
+      var parent = current.parent;
+
+      if (parent.left == current) {
+        var candidateRight = parent.right;
+        while(candidateRight is Pair rightPair) {
+          candidateRight = rightPair.left;
+        }
+        rightTarget = candidateRight as Regular;
+        break;
+      }
+      current = parent;
+    }
+
+    // Distribute values
+    if (leftTarget != null) {
+      leftTarget.Value += (this.left as Regular).Value;
+    }
+
+    if (rightTarget != null) {
+      rightTarget.Value += (this.right as Regular).Value;
+    }
+
+    // Replace with zero
+    if (this.parent.left == this)
+    {
+      this.parent.left = new Regular(0, this);
+    }
+    else
+    {
+      this.parent.left = new Regular(0, this);
+    }
+  }
+  
+  public override string ToString() => $"[{this.left},{this.right}]";
+}
+
+// var input = File.ReadAllText("test.input.txt");
+
+var tests = new [] {
+  "[1,2]",
+  "[[1,2],3]",
+  "[9,[8,7]]",
+  "[[1,9],[8,5]]",
+  "[[[[1,2],[3,4]],[[5,6],[7,8]]],9]",
+  "[[[9,[3,8]],[[0,9],6]],[[[3,7],[4,9]],3]]",
+  "[[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]",
+};
+
+var input = tests[2];
+print(input.Length);
+
+var pair = Pair.Parse(input, out var charsRead);
+print(charsRead);
+
+print(input);
+print(pair);
+
+
+// print(part1, "part1");
+
+#!csharp
+
+/// Part 2
+
+var input = File.ReadAllText("test.input.txt");
+
+
+// print(part2, "part2");
